@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { TextRun } from "@pdf-editor/core";
-import { TextOverlay } from "./TextOverlay.js";
+import { TextOverlay } from "./TextOverlay";
 
 interface PdfViewerProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy | null;

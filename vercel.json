@@ -3,9 +3,24 @@
   "buildCommand": "pnpm --filter @pdf-editor/web build",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
+  "headers": [
+    {
+      "source": "/(.*)\\.wasm",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/wasm"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/.*|.*\\.wasm|.*\\.pdf|.*\\.json).*)",
       "destination": "/index.html"
     }
   ]

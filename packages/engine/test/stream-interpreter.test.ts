@@ -106,4 +106,33 @@ describe("Stream Editor", () => {
     const text = reopened.loadPage(0).toStructuredText().asText();
     expect(text).toContain("#4567");
   });
+
+  it("applies full line edits and multiple edits cleanly", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const { applyEditsToPdfBytes } = await import("../src/edit/stream-editor.js");
+    const mupdf = await import("mupdf");
+
+    const fixturePath = path.resolve(__dirname, "../../../fixtures/pdfs/simple-word.pdf");
+    const originalBytes = fs.readFileSync(fixturePath);
+    const editedBytes = applyEditsToPdfBytes(originalBytes, [
+      {
+        pageIndex: 0,
+        runIndex: 0,
+        originalText: "Invoice #1042 - Total Amount: $500.00",
+        newText: "Invoice #9999 - Total Amount: $999.00",
+      },
+      {
+        pageIndex: 0,
+        runIndex: 1,
+        originalText: "Thank you for your business.",
+        newText: "Thank you very much!",
+      },
+    ]);
+
+    const reopened = mupdf.Document.openDocument(editedBytes, "application/pdf").asPDF();
+    const stream = reopened.findPage(0).get("Contents").readStream().asString();
+    expect(stream).toContain("Invoice #9999 - Total Amount: $999.00");
+    expect(stream).toContain("Thank you very much!");
+  });
 });

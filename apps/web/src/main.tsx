@@ -1,6 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { App } from "./App.js";
+
+// Configure MuPDF WASM binary location before any module loads
+(globalThis as any).$libmupdf_wasm_Module = {
+  locateFile: (file: string) => {
+    return `/assets/${file}`;
+  },
+};
+
+import { App } from "./App";
 import "./styles/theme.css";
 
 const rootElement = document.getElementById("root");

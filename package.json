@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @pdf-editor/web dev",
-    "build": "pnpm --filter @pdf-editor/web build",
+    "build": "node scripts/copy-wasm.js && pnpm --filter @pdf-editor/web build",
     "test": "vitest run",
     "lint": "eslint .",
     "poc:001": "tsx packages/engine/scripts/poc-001.ts"

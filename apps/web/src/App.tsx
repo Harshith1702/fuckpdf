@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { TextRun, HistoryManager, TextEditOperation } from "@pdf-editor/core";
 import { applyEditsToPdfBytes } from "@pdf-editor/engine";
-import { Toolbar } from "./components/Toolbar.js";
-import { Sidebar } from "./components/Sidebar.js";
-import { PdfViewer } from "./components/PdfViewer.js";
-import { StatusBar } from "./components/StatusBar.js";
+import { Toolbar } from "./components/Toolbar";
+import { Sidebar } from "./components/Sidebar";
+import { PdfViewer } from "./components/PdfViewer";
+import { StatusBar } from "./components/StatusBar";
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -241,6 +241,11 @@ export const App: React.FC = () => {
     };
     historyRef.current.push(op);
     updateHistoryState();
+
+    // Optimistically update run text in state
+    setTextRuns((prev) =>
+      prev.map((r) => (r.id === runId ? { ...r, text: newText } : r))
+    );
 
     const nextEdits = new Map(editsMap);
     if (newText === targetRun.originalText) {
