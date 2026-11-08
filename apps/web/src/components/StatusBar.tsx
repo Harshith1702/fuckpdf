@@ -20,30 +20,31 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   return (
     <footer className="status-bar">
-      <div className="status-item">
-        <span>Doc:</span>
-        <span style={{ color: "var(--text-primary)" }}>{documentName || "None"}</span>
+      <div className="status-group">
+        <span className="status-file">{documentName || "No document loaded"}</span>
         {pageCount > 0 && (
-          <>
-            <span style={{ margin: "0 4px" }}>|</span>
-            <span>Page {pageIndex + 1} of {pageCount}</span>
-          </>
+          <span className="status-page">
+            Page {pageIndex + 1} of {pageCount}
+          </span>
         )}
       </div>
 
-      {activeRun && (
-        <div className="status-item" style={{ color: "var(--accent)" }}>
-          <span>Editing:</span>
-          <span>Font: {activeRun.fontName} ({Math.round(activeRun.fontSize)}pt)</span>
-        </div>
-      )}
-
-      <div className="status-item">
-        {editsCount > 0 && (
-          <span className="status-badge-edits">{editsCount} edit{editsCount === 1 ? "" : "s"} applied</span>
+      <div className="status-group">
+        {activeRun ? (
+          <span className="status-info status-active-edit">
+            Editing: {activeRun.fontFamily?.split(",")[0]?.replace(/["']/g, "") ?? activeRun.fontName ?? "Text"} · {Math.round(activeRun.fontSize)}pt
+          </span>
+        ) : editsCount > 0 ? (
+          <span className="status-info status-edits-count">
+            {editsCount} edit{editsCount === 1 ? "" : "s"} saved to PDF stream
+          </span>
+        ) : (
+          <span className="status-info">Click any line to edit inline</span>
         )}
-        <span style={{ margin: "0 4px" }}>|</span>
-        <span>Zoom: {Math.round(zoom * 100)}%</span>
+      </div>
+
+      <div className="status-group">
+        <span className="status-zoom">{Math.round(zoom * 100)}%</span>
       </div>
     </footer>
   );

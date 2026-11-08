@@ -14,7 +14,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 export const App: React.FC = () => {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [documentName, setDocumentName] = useState<string>("simple-word.pdf");
   const [originalPdfBytes, setOriginalPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
@@ -378,6 +378,7 @@ export const App: React.FC = () => {
 
       <div className="workspace">
         <Sidebar
+          pdfDoc={pdfDoc}
           pageCount={pageCount}
           currentPage={pageIndex}
           collapsed={sidebarCollapsed}
