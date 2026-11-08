@@ -522,3 +522,118 @@ body {
   color: #ffffff;
   font-weight: 500;
 }
+
+/* Empty Dropzone UI */
+.empty-dropzone-container {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+}
+
+.empty-upload-card {
+  width: 100%;
+  background-color: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
+}
+
+.empty-upload-card:hover {
+  border-color: var(--border-active);
+  background-color: var(--bg-surface-elevated);
+}
+
+.empty-upload-card:focus-visible {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 2px var(--border-active);
+}
+
+.empty-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.empty-upload-card:hover .empty-icon-wrap {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.empty-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.empty-subtitle {
+  margin: 0 0 20px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.btn-empty-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 16px;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+
+.btn-empty-select:hover {
+  opacity: 0.9;
+}
+
+.empty-sample-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-empty-sample {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.12s ease;
+}
+
+.btn-empty-sample:hover {
+  color: var(--text-primary);
+}
+

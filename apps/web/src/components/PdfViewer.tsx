@@ -11,6 +11,7 @@ interface PdfViewerProps {
   onUpdateTextRun: (runId: string, newText: string, previousText: string) => void;
   onActiveRunChange: (run: TextRun | null) => void;
   onDropFile: (file: File) => void;
+  onLoadSample?: () => void;
 }
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
@@ -21,7 +22,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onUpdateTextRun,
   onActiveRunChange,
   onDropFile,
+  onLoadSample,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [viewportDims, setViewportDims] = useState<{ width: number; height: number }>({
     width: 612,
@@ -143,9 +146,65 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           />
         </div>
       ) : (
-        <div style={{ margin: "auto", textAlign: "center", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-          <p style={{ fontSize: "16px", marginBottom: "8px" }}>No PDF open</p>
-          <p style={{ fontSize: "12px" }}>Drag and drop a PDF file here or click &quot;Open PDF&quot; in the toolbar.</p>
+        <div className="empty-dropzone-container">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onDropFile(file);
+              }
+              e.target.value = "";
+            }}
+          />
+          <div
+            className="empty-upload-card"
+            onClick={() => fileInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                fileInputRef.current?.click();
+              }
+            }}
+          >
+            <div className="empty-icon-wrap">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="12" y1="18" x2="12" y2="12" />
+                <line x1="9" y1="15" x2="12" y2="12" />
+                <line x1="15" y1="15" x2="12" y2="12" />
+              </svg>
+            </div>
+            <h2 className="empty-title">Select a PDF to edit</h2>
+            <p className="empty-subtitle">Drag and drop a PDF file here, or click to browse</p>
+            <button
+              type="button"
+              className="btn-empty-select"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              Choose File
+            </button>
+          </div>
+
+          {onLoadSample && (
+            <div className="empty-sample-wrap">
+              <button
+                type="button"
+                className="btn-empty-sample"
+                onClick={onLoadSample}
+              >
+                Or try sample invoice
+              </button>
+            </div>
+          )}
         </div>
       )}
     </main>

@@ -15,7 +15,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<"dark" | "light">("light");
-  const [documentName, setDocumentName] = useState<string>("simple-word.pdf");
+  const [documentName, setDocumentName] = useState<string>("");
   const [originalPdfBytes, setOriginalPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -176,23 +176,18 @@ export const App: React.FC = () => {
     }
   }, [pdfDoc, pageIndex, zoom, extractTextRuns]);
 
-  // Load default fixture on startup
-  useEffect(() => {
-    const loadDefaultFixture = async () => {
-      try {
-        const response = await fetch("/fixtures/pdfs/simple-word.pdf");
-        if (response.ok) {
-          const buffer = await response.arrayBuffer();
-          loadPdf(new Uint8Array(buffer), "simple-word.pdf");
-        } else {
-          loadPdf(new Uint8Array([]), "Empty Document");
-        }
-      } catch {
-        // Fallback
+  // Optional sample document loader
+  const handleLoadSample = async () => {
+    try {
+      const response = await fetch("/fixtures/pdfs/simple-word.pdf");
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        loadPdf(new Uint8Array(buffer), "sample-invoice.pdf");
       }
-    };
-    loadDefaultFixture();
-  }, [loadPdf]);
+    } catch (err) {
+      console.error("Failed to load sample fixture:", err);
+    }
+  };
 
   // File Picker & Drop Handlers
   const handleOpenFile = (file: File) => {
@@ -382,14 +377,16 @@ export const App: React.FC = () => {
       />
 
       <div className="workspace">
-        <Sidebar
-          pdfDoc={pdfDoc}
-          pageCount={pageCount}
-          currentPage={pageIndex}
-          collapsed={sidebarCollapsed}
-          onSelectPage={(idx) => setPageIndex(idx)}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
+        {pageCount > 0 && (
+          <Sidebar
+            pdfDoc={pdfDoc}
+            pageCount={pageCount}
+            currentPage={pageIndex}
+            collapsed={sidebarCollapsed}
+            onSelectPage={(idx) => setPageIndex(idx)}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        )}
 
         <PdfViewer
           pdfDoc={pdfDoc}
@@ -399,6 +396,7 @@ export const App: React.FC = () => {
           onUpdateTextRun={handleUpdateTextRun}
           onActiveRunChange={setActiveRun}
           onDropFile={handleOpenFile}
+          onLoadSample={handleLoadSample}
         />
       </div>
 
