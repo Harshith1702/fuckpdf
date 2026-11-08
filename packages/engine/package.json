@@ -1,0 +1,14 @@
+{
+  "name": "@pdf-editor/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@types/pixelmatch": "^7.1.0",
+    "@types/pngjs": "^6.0.5",
+    "mupdf": "^1.28.1",
+    "pixelmatch": "^8.0.0",
+    "pngjs": "^7.0.0"
+  }
+}

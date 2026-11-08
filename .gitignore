@@ -1,0 +1,8 @@
+node_modules
+dist
+out/*
+!out/.gitkeep
+.DS_Store
+.vercel
+*.log
+.env*.local
