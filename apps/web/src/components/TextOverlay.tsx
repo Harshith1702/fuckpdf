@@ -18,6 +18,7 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tempText, setTempText] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const isCommittingRef = useRef(false);
 
   const activeRun = textRuns.find((r) => r.id === editingId) ?? null;
 
@@ -38,10 +39,18 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({
   };
 
   const handleCommitEdit = (run: TextRun) => {
-    if (editingId && tempText !== run.text) {
-      onUpdateTextRun(run.id, tempText, run.text);
+    if (isCommittingRef.current) return;
+    isCommittingRef.current = true;
+    try {
+      if (tempText !== run.text) {
+        onUpdateTextRun(run.id, tempText, run.text);
+      }
+      setEditingId(null);
+    } finally {
+      setTimeout(() => {
+        isCommittingRef.current = false;
+      }, 50);
     }
-    setEditingId(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, run: TextRun) => {
@@ -58,9 +67,19 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({
     <div className="text-overlay">
       {textRuns.map((run) => {
         const isEditing = editingId === run.id;
+        const isEdited = run.text !== run.originalText;
         const { x, y, width, height } = run.bounds;
+        const calculatedWidth = Math.max(
+          width,
+          run.text.length * (run.fontSize * scale * 0.58) + 12
+        );
 
         if (isEditing) {
+          const inputWidth = Math.max(
+            width,
+            tempText.length * (run.fontSize * scale * 0.58) + 16
+          );
+
           return (
             <input
               key={run.id}
@@ -69,8 +88,8 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({
               style={{
                 left: `${x}px`,
                 top: `${y}px`,
-                minWidth: `${Math.max(width, 20)}px`,
-                width: `${Math.max(width, tempText.length * (run.fontSize * scale * 0.58) + 10)}px`,
+                minWidth: `${Math.max(width, 24)}px`,
+                width: `${inputWidth}px`,
                 height: `${height}px`,
                 fontSize: `${run.fontSize * scale}px`,
                 fontFamily: run.fontFamily || "inherit",
@@ -88,18 +107,25 @@ export const TextOverlay: React.FC<TextOverlayProps> = ({
         return (
           <div
             key={run.id}
-            className="word-text-line"
+            className={`word-text-line ${isEdited ? "word-text-line-edited" : ""}`}
             style={{
               left: `${x}px`,
               top: `${y}px`,
-              width: `${Math.max(width, 12)}px`,
+              width: `${isEdited ? calculatedWidth : Math.max(width, 12)}px`,
               height: `${height}px`,
+              fontSize: `${run.fontSize * scale}px`,
+              fontFamily: run.fontFamily || "inherit",
+              fontWeight: run.isBold ? "bold" : "normal",
+              fontStyle: run.isItalic ? "italic" : "normal",
+              lineHeight: `${height}px`,
             }}
             onClick={(e) => {
               e.stopPropagation();
               handleStartEdit(run);
             }}
-          />
+          >
+            {isEdited ? run.text : null}
+          </div>
         );
       })}
     </div>

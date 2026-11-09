@@ -35,6 +35,11 @@ export const App: React.FC = () => {
     new Map()
   );
 
+  // Preserve pristine original runs so originalText is never corrupted
+  const originalRunsRef = useRef<Map<string, TextRun>>(new Map());
+  const isReloadingRef = useRef<boolean>(false);
+  const pendingEditsRef = useRef<Map<string, { pageIndex: number; runIndex?: number; originalText: string; newText: string }> | null>(null);
+
   const updateHistoryState = () => {
     setCanUndo(historyRef.current.canUndo());
     setCanRedo(historyRef.current.canRedo());
@@ -58,6 +63,10 @@ export const App: React.FC = () => {
       setOriginalPdfBytes(storageBytes);
       setPdfBytes(new Uint8Array(storageBytes.slice()));
       setDocumentName(name);
+
+      originalRunsRef.current.clear();
+      pendingEditsRef.current = null;
+      isReloadingRef.current = false;
 
       const workerBytes = new Uint8Array(storageBytes.slice());
       const loadingTask = pdfjsLib.getDocument({ data: workerBytes });
@@ -138,15 +147,37 @@ export const App: React.FC = () => {
 
           const currentIdx = idx++;
           const runId = `p${pageIdx}-r${currentIdx}`;
+
+          let origRun = originalRunsRef.current.get(runId);
+          if (!origRun) {
+            origRun = {
+              id: runId,
+              runIndex: currentIdx,
+              pageIndex: pageIdx,
+              text: item.str,
+              originalText: item.str,
+              bounds: {
+                x: vx,
+                y: boxTop,
+                width: scaledWidth,
+                height: boxHeight,
+                baselineY: vy,
+              },
+              fontName: item.fontName || "Helvetica",
+              fontFamily,
+              fontSize,
+              isBold,
+              isItalic,
+            };
+            originalRunsRef.current.set(runId, origRun);
+          }
+
           const existingEdit = editsMap.get(runId);
-          const currentText = existingEdit ? existingEdit.newText : item.str;
+          const currentText = existingEdit ? existingEdit.newText : origRun.originalText;
 
           runs.push({
-            id: runId,
-            runIndex: currentIdx,
-            pageIndex: pageIdx,
+            ...origRun,
             text: currentText,
-            originalText: item.str,
             bounds: {
               x: vx,
               y: boxTop,
@@ -154,11 +185,6 @@ export const App: React.FC = () => {
               height: boxHeight,
               baselineY: vy,
             },
-            fontName: item.fontName || "Helvetica",
-            fontFamily,
-            fontSize,
-            isBold,
-            isItalic,
           });
         }
       }
@@ -206,6 +232,13 @@ export const App: React.FC = () => {
     nextEdits: Map<string, { pageIndex: number; runIndex?: number; originalText: string; newText: string }>
   ) => {
     if (!originalPdfBytes) return;
+
+    if (isReloadingRef.current) {
+      pendingEditsRef.current = nextEdits;
+      return;
+    }
+    isReloadingRef.current = true;
+
     try {
       const editsList = Array.from(nextEdits.values());
       const updatedBytes = applyEditsToPdfBytes(new Uint8Array(originalPdfBytes.slice()), editsList);
@@ -216,19 +249,27 @@ export const App: React.FC = () => {
       setPdfDoc(doc);
     } catch (err) {
       console.error("Failed to re-render native edited PDF:", err);
+    } finally {
+      isReloadingRef.current = false;
+      if (pendingEditsRef.current) {
+        const pending = pendingEditsRef.current;
+        pendingEditsRef.current = null;
+        applyEditsAndReloadDoc(pending);
+      }
     }
   };
 
   // Text Edit Handling
   const handleUpdateTextRun = (runId: string, newText: string, previousText: string) => {
-    const targetRun = textRuns.find((r) => r.id === runId);
-    if (!targetRun || targetRun.text === newText) return;
+    const origRun = originalRunsRef.current.get(runId);
+    const originalText = origRun ? origRun.originalText : previousText;
+    if (newText === previousText) return;
 
     // Record edit in history
     const op: TextEditOperation = {
       type: "text-edit",
       runId,
-      runIndex: targetRun.runIndex,
+      runIndex: origRun?.runIndex,
       pageIndex,
       previousText,
       newText,
@@ -243,13 +284,13 @@ export const App: React.FC = () => {
     );
 
     const nextEdits = new Map(editsMap);
-    if (newText === targetRun.originalText) {
+    if (newText === originalText) {
       nextEdits.delete(runId);
     } else {
       nextEdits.set(runId, {
         pageIndex,
-        runIndex: targetRun.runIndex,
-        originalText: targetRun.originalText,
+        runIndex: origRun?.runIndex,
+        originalText,
         newText,
       });
     }
@@ -263,19 +304,24 @@ export const App: React.FC = () => {
   const handleUndo = () => {
     const op = historyRef.current.undo();
     if (op && op.type === "text-edit") {
+      const origRun = originalRunsRef.current.get(op.runId);
+      const originalText = origRun ? origRun.originalText : op.previousText;
+
+      // Optimistically update run text in state
+      setTextRuns((prev) =>
+        prev.map((r) => (r.id === op.runId ? { ...r, text: op.previousText } : r))
+      );
+
       const nextEdits = new Map(editsMap);
-      const target = textRuns.find((r) => r.id === op.runId);
-      if (target) {
-        if (op.previousText === target.originalText) {
-          nextEdits.delete(op.runId);
-        } else {
-          nextEdits.set(op.runId, {
-            pageIndex: op.pageIndex,
-            runIndex: op.runIndex ?? target.runIndex,
-            originalText: target.originalText,
-            newText: op.previousText,
-          });
-        }
+      if (op.previousText === originalText) {
+        nextEdits.delete(op.runId);
+      } else {
+        nextEdits.set(op.runId, {
+          pageIndex: op.pageIndex,
+          runIndex: op.runIndex,
+          originalText,
+          newText: op.previousText,
+        });
       }
       setEditsMap(nextEdits);
       updateHistoryState();
@@ -286,13 +332,22 @@ export const App: React.FC = () => {
   const handleRedo = () => {
     const op = historyRef.current.redo();
     if (op && op.type === "text-edit") {
+      const origRun = originalRunsRef.current.get(op.runId);
+      const originalText = origRun ? origRun.originalText : op.previousText;
+
+      // Optimistically update run text in state
+      setTextRuns((prev) =>
+        prev.map((r) => (r.id === op.runId ? { ...r, text: op.newText } : r))
+      );
+
       const nextEdits = new Map(editsMap);
-      const target = textRuns.find((r) => r.id === op.runId);
-      if (target) {
+      if (op.newText === originalText) {
+        nextEdits.delete(op.runId);
+      } else {
         nextEdits.set(op.runId, {
           pageIndex: op.pageIndex,
-          runIndex: op.runIndex ?? target.runIndex,
-          originalText: target.originalText,
+          runIndex: op.runIndex,
+          originalText,
           newText: op.newText,
         });
       }
@@ -340,7 +395,7 @@ export const App: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = documentName.replace(/\.pdf$/i, "") + "-edited.pdf";
+      a.download = (documentName ? documentName.replace(/\.pdf$/i, "") : "document") + "-edited.pdf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

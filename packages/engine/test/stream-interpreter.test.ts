@@ -95,16 +95,14 @@ describe("Stream Editor", () => {
     const mupdf = await import("mupdf");
 
     const fixturePath = path.resolve(__dirname, "../../../fixtures/pdfs/simple-word.pdf");
-    if (!fs.existsSync(fixturePath)) return;
-
     const originalBytes = fs.readFileSync(fixturePath);
     const editedBytes = applyEditsToPdfBytes(originalBytes, [
       { pageIndex: 0, originalText: "#1042", newText: "#4567" },
     ]);
 
     const reopened = mupdf.Document.openDocument(editedBytes, "application/pdf").asPDF();
-    const text = reopened.loadPage(0).toStructuredText().asText();
-    expect(text).toContain("#4567");
+    const stream = reopened.findPage(0).get("Contents").readStream().asString();
+    expect(stream).toContain("#4567");
   });
 
   it("applies full line edits and multiple edits cleanly", async () => {
