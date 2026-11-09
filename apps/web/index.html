@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fuckpdf - In-Place PDF Editor</title>
+    <meta http-equiv="refresh" content="0; url=https://boringpdf.app" />
+    <title>Redirecting to boringpdf.app...</title>
     <script>
-      window.$libmupdf_wasm_Module = {
-        locateFile: function (file) {
-          return "/assets/" + file;
-        }
-      };
+      window.location.replace("https://boringpdf.app" + (window.location.search || "") + (window.location.hash || ""));
     </script>
   </head>
   <body>

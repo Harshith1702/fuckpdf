@@ -1,25 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "headers": [
+  "redirects": [
     {
-      "source": "/(.*)\\.wasm",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/wasm"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/((?!assets/.*|.*\\.wasm|.*\\.pdf|.*\\.json).*)",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "destination": "https://boringpdf.app",
+      "permanent": false
     }
   ]
 }
